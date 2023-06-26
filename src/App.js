@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 
 function App() {
   const [sentences, setSentences] = useState([]);
-  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
-  const [userInput, setUserInput] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [userInput, setUserInput] = useState({});
   const [score, setScore] = useState(0);
   const [answeredCorrectly, setAnsweredCorrectly] = useState({});
+
+  // Items per page
+  const itemsPerPage = 20;
 
   // Load sentences from JSON file
   useEffect(() => {
@@ -16,52 +19,51 @@ function App() {
       });
   }, []);
 
-  const handleInputChange = event => {
-    setUserInput(event.target.value);
+  const handleInputChange = (event, index) => {
+    setUserInput({...userInput, [index]: event.target.value});
   };
 
-  const handleSubmit = () => {
-      // Check if this sentence has been answered correctly before
-      if (answeredCorrectly[currentSentenceIndex]) {
-        alert('You have already correctly answered this sentence.');
-        return;
-      }
-    if (userInput === sentences[currentSentenceIndex].answer) {
+  const handleSubmit = (index) => {
+    if (answeredCorrectly[index]) {
+      alert('You have already correctly answered this sentence.');
+      return;
+    }
+    if (userInput[index] === sentences[index].answer) {
       setScore(score + 1);
-    setAnsweredCorrectly({
-      ...answeredCorrectly,
-      [currentSentenceIndex]: true, // Mark this sentence as answered correctly
-    });
+      setAnsweredCorrectly({
+        ...answeredCorrectly,
+        [index]: true, // Mark this sentence as answered correctly
+      });
     }
-    handleNext();
-    setUserInput(""); // Reset user input
+    setUserInput({...userInput, [index]: ""}); // Reset user input
   };
 
-  const handleNext = () => {
-    // Prevents going beyond the last sentence
-    if (currentSentenceIndex < sentences.length - 1) {
-      setCurrentSentenceIndex(currentSentenceIndex + 1);
-    }
-    setUserInput(""); // Reset user input
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
   };
 
-  const handlePrevious = () => {
-    // Prevents going before the first sentence
-    if (currentSentenceIndex > 0) {
-      setCurrentSentenceIndex(currentSentenceIndex - 1);
-    }
-    setUserInput(""); // Reset user input
+  const handlePreviousPage = () => {
+    setCurrentPage(currentPage - 1);
   };
+
+  // Calculate the range of sentences to display
+  const start = currentPage * itemsPerPage;
+  const end = start + itemsPerPage;
+  const sentencesToDisplay = sentences.slice(start, end);
 
   return (
     <div className="App">
-      {sentences.length > 0 && <h1>{sentences[currentSentenceIndex].sentence}</h1>}
-      <input type="text" value={userInput} onChange={handleInputChange} />
-      <button onClick={handleSubmit}>Submit</button>
-      <button onClick={handlePrevious} disabled={currentSentenceIndex === 0}>Previous</button>
-      <button onClick={handleNext} disabled={currentSentenceIndex === sentences.length - 1}>Next</button>
+      {sentencesToDisplay.map((sentence, index) => (
+        <div key={sentence.id} style={{ display: 'flex', alignItems: 'center' }}>
+          <h2>{start + index + 1}. {sentence.sentence}</h2>
+          <input type="text" value={userInput[start + index] || ""} onChange={(e) => handleInputChange(e, start + index)} />
+          <button onClick={() => handleSubmit(start + index)}>Submit</button>
+        </div>
+      ))}
+      <button onClick={handlePreviousPage} disabled={currentPage === 0}>Previous Page</button>
+      <button onClick={handleNextPage} disabled={end >= sentences.length}>Next Page</button>
       <h2>Score: {score}</h2>
-      <h3>Sentence: {currentSentenceIndex + 1} of {sentences.length}</h3>
+      <h3>Page: {currentPage + 1} of {Math.ceil(sentences.length / itemsPerPage)}</h3>
     </div>
   );
 }
