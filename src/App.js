@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 function App() {
+  const [files, setFiles] = useState([]);
+  const [currentFile, setCurrentFile] = useState("");
   const [sentences, setSentences] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [userInput, setUserInput] = useState({});
@@ -10,14 +12,31 @@ function App() {
   // Items per page
   const itemsPerPage = 20;
 
-  // Load sentences from JSON file
   useEffect(() => {
-    fetch("/sentences.json")
+    fetch("/files.json")
       .then(res => res.json())
       .then(data => {
-        setSentences(data);
+        setFiles(data);
+        if (data.length > 0) {
+          setCurrentFile(data[0]);
+        }
       });
   }, []);
+
+  // Load sentences from JSON file
+  useEffect(() => {
+    if (currentFile) {
+      fetch(`/${currentFile}`)
+        .then(res => res.json())
+        .then(data => {
+          setSentences(data);
+          setCurrentPage(0); // Reset to the first page
+          setUserInput({}); // Reset user input
+          setScore(0); // Reset score
+          setAnsweredCorrectly({}); // Reset answered sentences
+        });
+    }
+  }, [currentFile]);
 
   const handleInputChange = (event, index) => {
     setUserInput({...userInput, [index]: event.target.value});
@@ -53,6 +72,11 @@ function App() {
 
   return (
     <div className="App">
+      <select value={currentFile} onChange={(e) => setCurrentFile(e.target.value)}>
+        {files.map((file, index) => (
+          <option key={index} value={file}>{file}</option>
+        ))}
+      </select>
       {sentencesToDisplay.map((sentence, index) => (
         <div key={sentence.id} style={{ display: 'flex', alignItems: 'center' }}>
           <h2>{start + index + 1}. {sentence.sentence}</h2>

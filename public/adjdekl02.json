@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "sentence": "Er geht zum ___.",
+    "answer": "Supermarkt"
+  },
+  {
+    "id": 2,
+    "sentence": "Ich mag ___.",
+    "answer": "Schokolade"
+  }
+]
